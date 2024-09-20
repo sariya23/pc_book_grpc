@@ -6,6 +6,7 @@ import (
 	"log"
 	"main/pb"
 	"main/sample"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -14,7 +15,7 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	parentCtx := context.Background()
 	serverAddr := flag.String("addr", "", "the server address")
 	flag.Parse()
 	log.Printf("dial server %s", *serverAddr)
@@ -28,7 +29,8 @@ func main() {
 	req := &pb.CreateLaptopRequest{
 		Laptop: laptop,
 	}
-
+	ctx, cancel := context.WithTimeout(parentCtx, time.Second*5)
+	defer cancel()
 	response, err := client.CreateLaptop(ctx, req)
 	if err != nil {
 		state, ok := status.FromError(err)
