@@ -1,0 +1,62 @@
+{
+	"id":  "313862c9-b680-441d-9889-0b3574fafacc",
+	"brand":  "Dell",
+	"name":  "Vostro",
+	"cpu":  {
+		"brand":  "Intel",
+		"name":  "Xeon E-2286M",
+		"cores":  0,
+		"threads":  5,
+		"minGhz":  2.95187105436076,
+		"maxGhx":  4.084740936367239
+	},
+	"RAM":  {
+		"value":  "44",
+		"unit":  "GIGABYTE"
+	},
+	"gpus":  [
+		{
+			"brand":  "AMD",
+			"name":  "RX 580",
+			"minGhz":  2.802277259616236,
+			"maxGhx":  2.802277259616236,
+			"memory":  {
+				"value":  "13",
+				"unit":  "GIGABYTE"
+			}
+		}
+	],
+	"storages":  [
+		{
+			"driver":  "HDD",
+			"memory":  {
+				"value":  "5",
+				"unit":  "TERABYTE"
+			}
+		},
+		{
+			"driver":  "HDD",
+			"memory":  {
+				"value":  "5",
+				"unit":  "TERABYTE"
+			}
+		}
+	],
+	"screen":  {
+		"inch":  13.570061565059724,
+		"resolution":  {
+			"width":  2394,
+			"height":  1347
+		},
+		"panel":  "IPS",
+		"multitouch":  true
+	},
+	"keyboard":  {
+		"layout":  "QWERTZ",
+		"backlist":  false
+	},
+	"weightKg":  2.117092472253205,
+	"priceUsd":  2325.8526709920898,
+	"releaseYear":  2024,
+	"updatedAt":  "2024-09-20T13:50:41.178277704Z"
+}
