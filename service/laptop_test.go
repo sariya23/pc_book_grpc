@@ -61,7 +61,7 @@ func TestServerCreateLaptop(t *testing.T) {
 	for _, tc := range testCasess {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			req := &pb.CreateLaptopRequst{
+			req := &pb.CreateLaptopRequest{
 				Laptop: tc.laptop,
 			}
 			ctx := context.Background()

@@ -23,7 +23,7 @@ func TestClientCreateLaptop(t *testing.T) {
 
 	laptop := sample.NewLaptop()
 	expectedID := laptop.Id
-	req := &pb.CreateLaptopRequst{
+	req := &pb.CreateLaptopRequest{
 		Laptop: laptop,
 	}
 	res, err := client.CreateLaptop(ctx, req)

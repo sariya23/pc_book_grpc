@@ -5,7 +5,7 @@ option go_package = "./pb";
 
 import "laptop.proto";
 
-message CreateLaptopRequst {
+message CreateLaptopRequest {
     Laptop laptop = 1;
 }
 
@@ -14,5 +14,5 @@ message CreateLaptopResponse {
 }
 
 service LaptopService {
-    rpc CreateLaptop(CreateLaptopRequst) returns (CreateLaptopResponse) {};
+    rpc CreateLaptop(CreateLaptopRequest) returns (CreateLaptopResponse) {};
 }

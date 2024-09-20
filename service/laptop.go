@@ -27,7 +27,7 @@ func NewLaptopServer(store LaptopStorage) *LaptopServer {
 
 func (s *LaptopServer) CreateLaptop(
 	ctx context.Context,
-	req *pb.CreateLaptopRequst,
+	req *pb.CreateLaptopRequest,
 ) (*pb.CreateLaptopResponse, error) {
 	laptop := req.GetLaptop()
 	if len(laptop.Id) > 0 {
