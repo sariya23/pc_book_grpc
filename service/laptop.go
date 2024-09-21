@@ -17,7 +17,7 @@ import (
 type LaptopStorage interface {
 	Save(laptop *pb.Laptop) error
 	Get(id string) (*pb.Laptop, error)
-	Search(filter *pb.Filter, found func(laptop *pb.Laptop) error) error
+	Search(ctx context.Context, filter *pb.Filter, found func(laptop *pb.Laptop) error) error
 }
 
 type LaptopServer struct {
@@ -47,7 +47,7 @@ func (s *LaptopServer) CreateLaptop(
 		}
 		laptop.Id = id.String()
 	}
-	time.Sleep(6 * time.Second)
+	time.Sleep(time.Second)
 
 	if ctx.Err() == context.Canceled {
 		log.Println("context cancelled")
@@ -77,6 +77,7 @@ func (s *LaptopServer) SearchLaptop(
 	filter := req.GetFilter()
 	log.Printf("recieve a seacrh laptop request with filter %v\n", filter)
 	err := s.Storage.Search(
+		stream.Context(),
 		filter,
 		func(laptop *pb.Laptop) error {
 			response := &pb.SearchLaptopResponse{

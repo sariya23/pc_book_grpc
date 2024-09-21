@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
 	"main/pb"
 	"sync"
 
@@ -57,11 +59,19 @@ func (m *InMemoryLaptopStore) Get(id string) (*pb.Laptop, error) {
 	return other, nil
 }
 
-func (m *InMemoryLaptopStore) Search(filter *pb.Filter, found func(laptop *pb.Laptop) error) error {
+func (m *InMemoryLaptopStore) Search(
+	ctx context.Context,
+	filter *pb.Filter,
+	found func(laptop *pb.Laptop) error,
+) error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	for _, laptop := range m.data {
+		if err := ctx.Err(); err == context.Canceled || err == context.DeadlineExceeded {
+			log.Println("context is cancelled")
+			return errors.New("context is cancelled")
+		}
 		if isQualified(filter, laptop) {
 			other := &pb.Laptop{}
 			err := copier.Copy(other, laptop)
