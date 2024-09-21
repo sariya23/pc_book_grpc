@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -16,15 +17,16 @@ import (
 type LaptopStorage interface {
 	Save(laptop *pb.Laptop) error
 	Get(id string) (*pb.Laptop, error)
+	Search(filter *pb.Filter, found func(laptop *pb.Laptop) error) error
 }
 
 type LaptopServer struct {
-	Store LaptopStorage
+	Storage LaptopStorage
 	pb.UnimplementedLaptopServiceServer
 }
 
-func NewLaptopServer(store LaptopStorage) *LaptopServer {
-	return &LaptopServer{Store: store}
+func NewLaptopServer(storage LaptopStorage) *LaptopServer {
+	return &LaptopServer{Storage: storage}
 }
 
 func (s *LaptopServer) CreateLaptop(
@@ -57,7 +59,7 @@ func (s *LaptopServer) CreateLaptop(
 		return nil, status.Error(codes.DeadlineExceeded, "deadline exceeded")
 	}
 
-	err := s.Store.Save(laptop)
+	err := s.Storage.Save(laptop)
 	if err != nil {
 		code := codes.Internal
 		if errors.Is(err, storage.ErrAlreadyExist) {
@@ -66,4 +68,29 @@ func (s *LaptopServer) CreateLaptop(
 		return nil, status.Error(code, "cennot save laptop")
 	}
 	return &pb.CreateLaptopResponse{Id: laptop.Id}, nil
+}
+
+func (s *LaptopServer) SearchLaptop(
+	req *pb.SearchLaptopRequest,
+	stream grpc.ServerStreamingServer[pb.SearchLaptopResponse],
+) error {
+	filter := req.GetFilter()
+	log.Printf("recieve a seacrh laptop request with filter %v\n", filter)
+	err := s.Storage.Search(
+		filter,
+		func(laptop *pb.Laptop) error {
+			response := &pb.SearchLaptopResponse{
+				Laptop: laptop,
+			}
+			err := stream.Send(response)
+			if err != nil {
+				return nil
+			}
+			log.Printf("send laptop with id %v", laptop.GetId())
+			return nil
+		})
+	if err != nil {
+		return status.Error(codes.Internal, "internal error")
+	}
+	return nil
 }

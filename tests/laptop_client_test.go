@@ -31,7 +31,7 @@ func TestClientCreateLaptop(t *testing.T) {
 	require.NotNil(t, res)
 	require.Equal(t, expectedID, res.Id)
 
-	other, err := server.Store.Get(laptop.Id)
+	other, err := server.Storage.Get(laptop.Id)
 	require.NoError(t, err)
 	require.NotNil(t, other)
 	requireSameLaptops(t, other, laptop)
