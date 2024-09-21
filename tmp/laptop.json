@@ -1,62 +1,62 @@
 {
-	"id":  "313862c9-b680-441d-9889-0b3574fafacc",
-	"brand":  "Dell",
-	"name":  "Vostro",
-	"cpu":  {
-		"brand":  "Intel",
-		"name":  "Xeon E-2286M",
-		"cores":  0,
-		"threads":  5,
-		"minGhz":  2.95187105436076,
-		"maxGhx":  4.084740936367239
+	"id": "99dc07cc-ca29-4c7f-9d82-d29e4a65c4e8",
+	"brand": "Dell",
+	"name": "XPS",
+	"cpu": {
+		"brand": "AMD",
+		"name": "Ryzen 3 PRO 3200GE",
+		"cores": 0,
+		"threads": 12,
+		"minGhz": 2.726285350907041,
+		"maxGhx": 4.6122263720467895
 	},
-	"RAM":  {
-		"value":  "44",
-		"unit":  "GIGABYTE"
+	"RAM": {
+		"value": "59",
+		"unit": "GIGABYTE"
 	},
-	"gpus":  [
+	"gpus": [
 		{
-			"brand":  "AMD",
-			"name":  "RX 580",
-			"minGhz":  2.802277259616236,
-			"maxGhx":  2.802277259616236,
-			"memory":  {
-				"value":  "13",
-				"unit":  "GIGABYTE"
+			"brand": "Nvidia",
+			"name": "RTX 2070",
+			"minGhz": 3.9550176163031967,
+			"maxGhx": 3.9550176163031967,
+			"memory": {
+				"value": "4",
+				"unit": "GIGABYTE"
 			}
 		}
 	],
-	"storages":  [
+	"storages": [
 		{
-			"driver":  "HDD",
-			"memory":  {
-				"value":  "5",
-				"unit":  "TERABYTE"
+			"driver": "HDD",
+			"memory": {
+				"value": "1",
+				"unit": "TERABYTE"
 			}
 		},
 		{
-			"driver":  "HDD",
-			"memory":  {
-				"value":  "5",
-				"unit":  "TERABYTE"
+			"driver": "HDD",
+			"memory": {
+				"value": "6",
+				"unit": "TERABYTE"
 			}
 		}
 	],
-	"screen":  {
-		"inch":  13.570061565059724,
-		"resolution":  {
-			"width":  2394,
-			"height":  1347
+	"screen": {
+		"inch": 15.376765453182138,
+		"resolution": {
+			"width": 2643,
+			"height": 1487
 		},
-		"panel":  "IPS",
-		"multitouch":  true
+		"panel": "OLED",
+		"multitouch": false
 	},
-	"keyboard":  {
-		"layout":  "QWERTZ",
-		"backlist":  false
+	"keyboard": {
+		"layout": "QWERTZ",
+		"backlist": false
 	},
-	"weightKg":  2.117092472253205,
-	"priceUsd":  2325.8526709920898,
-	"releaseYear":  2024,
-	"updatedAt":  "2024-09-20T13:50:41.178277704Z"
+	"weightKg": 2.689592899723843,
+	"priceUsd": 1568.3196717226765,
+	"releaseYear": 2019,
+	"updatedAt": "2024-09-21T14:11:08.413540636Z"
 }
