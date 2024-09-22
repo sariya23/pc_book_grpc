@@ -29,7 +29,7 @@ func TestServerCreateLaptop(t *testing.T) {
 	testCasess := []struct {
 		name         string
 		laptop       *pb.Laptop
-		storage      service.LaptopStorage
+		storage      service.LaptopStorager
 		expectedCode codes.Code
 	}{
 		{
@@ -65,7 +65,7 @@ func TestServerCreateLaptop(t *testing.T) {
 				Laptop: tc.laptop,
 			}
 			ctx := context.Background()
-			server := service.NewLaptopServer(tc.storage)
+			server := service.NewLaptopServer(tc.storage, nil)
 			res, err := server.CreateLaptop(ctx, req)
 			if tc.expectedCode == codes.OK {
 				require.NoError(t, err)

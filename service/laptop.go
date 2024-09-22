@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"log"
@@ -14,19 +15,28 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type LaptopStorage interface {
+type LaptopStorager interface {
 	Save(laptop *pb.Laptop) error
 	Get(id string) (*pb.Laptop, error)
 	Search(ctx context.Context, filter *pb.Filter, found func(laptop *pb.Laptop) error) error
 }
 
+type ImageStorager interface {
+	Save(
+		laptopID string,
+		imageType string,
+		imageData bytes.Buffer,
+	) (string, error)
+}
+
 type LaptopServer struct {
-	Storage LaptopStorage
+	LaptopStorage LaptopStorager
+	ImageStorage  ImageStorager
 	pb.UnimplementedLaptopServiceServer
 }
 
-func NewLaptopServer(storage LaptopStorage) *LaptopServer {
-	return &LaptopServer{Storage: storage}
+func NewLaptopServer(laptopStorage LaptopStorager, imageStorage ImageStorager) *LaptopServer {
+	return &LaptopServer{LaptopStorage: laptopStorage, ImageStorage: imageStorage}
 }
 
 func (s *LaptopServer) CreateLaptop(
@@ -59,7 +69,7 @@ func (s *LaptopServer) CreateLaptop(
 		return nil, status.Error(codes.DeadlineExceeded, "deadline exceeded")
 	}
 
-	err := s.Storage.Save(laptop)
+	err := s.LaptopStorage.Save(laptop)
 	if err != nil {
 		code := codes.Internal
 		if errors.Is(err, storage.ErrAlreadyExist) {
@@ -76,7 +86,7 @@ func (s *LaptopServer) SearchLaptop(
 ) error {
 	filter := req.GetFilter()
 	log.Printf("recieve a seacrh laptop request with filter %v\n", filter)
-	err := s.Storage.Search(
+	err := s.LaptopStorage.Search(
 		stream.Context(),
 		filter,
 		func(laptop *pb.Laptop) error {
@@ -93,5 +103,10 @@ func (s *LaptopServer) SearchLaptop(
 	if err != nil {
 		return status.Error(codes.Internal, "internal error")
 	}
+	return nil
+}
+
+func (s *LaptopServer) UploadImage(
+	grpc.ClientStreamingServer[pb.UploadImageRequest, pb.UploadImageResponse]) error {
 	return nil
 }
