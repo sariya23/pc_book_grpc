@@ -18,7 +18,8 @@ func main() {
 	log.Println("starting grpc server")
 	laptopStorage := storage.NewInMemoryLaptopStorage()
 	imageStorage := storage.NewImageStorage("img")
-	server := service.NewLaptopServer(laptopStorage, imageStorage)
+	ratingStorage := storage.NewRatingStorage()
+	server := service.NewLaptopServer(laptopStorage, imageStorage, ratingStorage)
 	grpcServer := grpc.NewServer()
 	pb.RegisterLaptopServiceServer(grpcServer, server)
 

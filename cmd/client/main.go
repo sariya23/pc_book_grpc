@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"main/pb"
@@ -30,7 +31,7 @@ func main() {
 		log.Fatalf("cannot connect to server with address: %s. Error: (%v)", *serverAddr, err)
 	}
 	client := pb.NewLaptopServiceClient(conn)
-	testUploadImage(parentCtx, client)
+	testRateLaptop(parentCtx, client)
 }
 
 func testCreateNLaptopsAndSearchOneOf(ctx context.Context, client pb.LaptopServiceClient) {
@@ -159,4 +160,71 @@ func createLaptop(parCtx context.Context, client pb.LaptopServiceClient, laptop 
 	}
 
 	log.Printf("laptop saved with id: %s\n", response.Id)
+}
+
+func rateLaptop(ctx context.Context, client pb.LaptopServiceClient, laptopIds []string, scores []float64) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	stream, err := client.RateLaptop(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot rate laptop: %v", err)
+	}
+
+	waitResponse := make(chan error)
+
+	go func() {
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				log.Println("no more data")
+				waitResponse <- nil
+				break
+			}
+			if err != nil {
+				waitResponse <- fmt.Errorf("cannot receive stream response: %w", err)
+			}
+
+			log.Printf("recieved data: %v\n", resp)
+
+		}
+	}()
+	for i, laptopId := range laptopIds {
+		req := &pb.RateLaptopRequest{
+			LaptopId: laptopId,
+			Score:    scores[i],
+		}
+		err := stream.Send(req)
+		if err != nil {
+			return fmt.Errorf("cannot send stream request %w: %w", err, stream.RecvMsg(nil))
+		}
+
+		log.Printf("sent request: %v\n", req)
+	}
+	err = stream.CloseSend()
+	if err != nil {
+		return fmt.Errorf("cannot close send: %w", err)
+	}
+	err = <-waitResponse
+	return err
+}
+
+func testRateLaptop(ctx context.Context,
+	client pb.LaptopServiceClient,
+) {
+	n := 3
+	laptopIds := make([]string, n)
+	for i := 0; i < n; i++ {
+		laptop := sample.NewLaptop()
+		laptopIds[i] = laptop.GetId()
+		createLaptop(ctx, client, laptop)
+	}
+	scores := make([]float64, n)
+	for i := 0; i < n; i++ {
+		scores[i] = sample.RadnomLaptopScore()
+	}
+	err := rateLaptop(ctx, client, laptopIds, scores)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
 }

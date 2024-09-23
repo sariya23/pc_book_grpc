@@ -34,14 +34,19 @@ type ImageStorager interface {
 	) (string, error)
 }
 
+type RatingStorager interface {
+	Add(laptopId string, score float64) (*storage.Rating, error)
+}
+
 type LaptopServer struct {
 	LaptopStorage LaptopStorager
 	ImageStorage  ImageStorager
+	RatingStorage RatingStorager
 	pb.UnimplementedLaptopServiceServer
 }
 
-func NewLaptopServer(laptopStorage LaptopStorager, imageStorage ImageStorager) *LaptopServer {
-	return &LaptopServer{LaptopStorage: laptopStorage, ImageStorage: imageStorage}
+func NewLaptopServer(laptopStorage LaptopStorager, imageStorage ImageStorager, ratingStorage RatingStorager) *LaptopServer {
+	return &LaptopServer{LaptopStorage: laptopStorage, ImageStorage: imageStorage, RatingStorage: ratingStorage}
 }
 
 func (s *LaptopServer) CreateLaptop(
@@ -177,5 +182,55 @@ func (s *LaptopServer) UploadImage(
 		return status.Errorf(codes.Unknown, "cannot send response: %v", err)
 	}
 	log.Println("image save successfully")
+	return nil
+}
+
+func (s *LaptopServer) RateLaptop(stream grpc.BidiStreamingServer[pb.RateLaptopRequest, pb.RateLaptopResponse]) error {
+	for {
+		if stream.Context().Err() == context.Canceled {
+			log.Println("context cancelled")
+			return status.Error(codes.Canceled, "cancelled context")
+		}
+
+		if stream.Context().Err() == context.DeadlineExceeded {
+			log.Println("deadline exceeded")
+			return status.Error(codes.DeadlineExceeded, "deadline exceeded")
+		}
+		req, err := stream.Recv()
+		if err == io.EOF {
+			log.Println("no data")
+			break
+		}
+		if err != nil {
+			return status.Errorf(codes.Unknown, "cannot receive stream request: %v", err)
+		}
+		laptopId := req.GetLaptopId()
+		score := req.GetScore()
+
+		log.Printf("reveive a rate for laptop with id: %s, score: %.2f", laptopId, score)
+
+		found, err := s.LaptopStorage.Get(laptopId)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot find laptop with id: %v: (%v)", laptopId, err)
+		}
+		if found == nil {
+			return status.Errorf(codes.NotFound, "laptop id %v is not found", laptopId)
+		}
+
+		rating, err := s.RatingStorage.Add(laptopId, score)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot rate the laptop with id: %v: (%v)", laptopId, err)
+		}
+
+		resp := &pb.RateLaptopResponse{
+			LaptopId:     laptopId,
+			RatedCount:   rating.Count,
+			AvarageScore: rating.Sum / float64(rating.Count),
+		}
+		err = stream.Send(resp)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot send response: %v", err)
+		}
+	}
 	return nil
 }
