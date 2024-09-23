@@ -1,27 +1,27 @@
 {
-	"id": "631d5871-8e78-44cb-ba25-c365181e066e",
-	"brand": "Dell",
-	"name": "Latitude",
+	"id": "5b0d62e8-0adb-496b-924c-f561703675db",
+	"brand": "Lenovo",
+	"name": "Thinkpad P1",
 	"cpu": {
-		"brand": "Intel",
-		"name": "Core i9-9980HK",
+		"brand": "AMD",
+		"name": "Ryzen 7 PRO 2700U",
 		"cores": 0,
-		"threads": 9,
-		"minGhz": 2.037710877571414,
-		"maxGhx": 2.472627676481026
+		"threads": 5,
+		"minGhz": 2.1400016732747202,
+		"maxGhx": 3.0298899893849898
 	},
 	"RAM": {
-		"value": "61",
+		"value": "24",
 		"unit": "GIGABYTE"
 	},
 	"gpus": [
 		{
 			"brand": "Nvidia",
-			"name": "GTX 1660-Ti",
-			"minGhz": 3.4522367797769804,
-			"maxGhx": 3.4522367797769804,
+			"name": "GTX 1070",
+			"minGhz": 3.887834146475374,
+			"maxGhx": 3.887834146475374,
 			"memory": {
-				"value": "22",
+				"value": "28",
 				"unit": "GIGABYTE"
 			}
 		}
@@ -30,33 +30,33 @@
 		{
 			"driver": "HDD",
 			"memory": {
-				"value": "3",
+				"value": "5",
 				"unit": "TERABYTE"
 			}
 		},
 		{
 			"driver": "HDD",
 			"memory": {
-				"value": "2",
+				"value": "3",
 				"unit": "TERABYTE"
 			}
 		}
 	],
 	"screen": {
-		"inch": 14.70623180527892,
+		"inch": 16.225204117707897,
 		"resolution": {
-			"width": 4961,
-			"height": 2791
+			"width": 6000,
+			"height": 3375
 		},
-		"panel": "OLED",
-		"multitouch": true
+		"panel": "IPS",
+		"multitouch": false
 	},
 	"keyboard": {
 		"layout": "QWERTY",
-		"backlist": true
+		"backlist": false
 	},
-	"weightKg": 1.9285173667601767,
-	"priceUsd": 2406.62184368179,
-	"releaseYear": 2016,
-	"updatedAt": "2024-09-22T13:30:33.214283604Z"
+	"weightKg": 1.3020013520553027,
+	"priceUsd": 2100.3907006897416,
+	"releaseYear": 2024,
+	"updatedAt": "2024-09-23T13:50:48.355947141Z"
 }
