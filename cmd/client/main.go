@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"io"
 	"log"
 	"main/pb"
 	"main/sample"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -27,12 +30,16 @@ func main() {
 		log.Fatalf("cannot connect to server with address: %s. Error: (%v)", *serverAddr, err)
 	}
 	client := pb.NewLaptopServiceClient(conn)
+	testUploadImage(parentCtx, client)
+}
+
+func testCreateNLaptopsAndSearchOneOf(ctx context.Context, client pb.LaptopServiceClient) {
 	var wg sync.WaitGroup
 	wg.Add(10)
 	for i := 0; i < 10; i++ {
 		go func() {
 			defer wg.Done()
-			createLaptop(parentCtx, client)
+			createLaptop(ctx, client, sample.NewLaptop())
 		}()
 	}
 	wg.Wait()
@@ -42,7 +49,66 @@ func main() {
 		MinCpuGhz:   2.5,
 		MinRam:      &pb.Memory{Value: 8, Unit: pb.Memory_GIGABYTE},
 	}
-	searchLaptop(parentCtx, client, filter)
+	searchLaptop(ctx, client, filter)
+}
+
+func testUploadImage(ctx context.Context, client pb.LaptopServiceClient) {
+	laptop := sample.NewLaptop()
+	createLaptop(ctx, client, laptop)
+	uploadImage(ctx, client, laptop.GetId(), "tmp/laptop.jpg")
+}
+
+func uploadImage(patCtx context.Context, client pb.LaptopServiceClient, laptopId string, imagePath string) {
+	file, err := os.Open(imagePath)
+	if err != nil {
+		log.Fatalf("cannot open file: %v", err)
+	}
+	defer file.Close()
+	ctx, cancel := context.WithTimeout(patCtx, time.Second*5)
+	defer cancel()
+
+	stream, err := client.UploadImage(ctx)
+	if err != nil {
+		log.Fatalf("cannot upload image: %v", err)
+	}
+	req := &pb.UploadImageRequest{
+		Data: &pb.UploadImageRequest_Info{
+			Info: &pb.ImageInfo{
+				LaptopId:  laptopId,
+				ImageType: filepath.Ext(imagePath),
+			},
+		},
+	}
+
+	err = stream.Send(req)
+	if err != nil {
+		log.Fatalf("cannot send request: %v", err)
+	}
+	reader := bufio.NewReader(file)
+	buffer := make([]byte, 1024)
+	for {
+		n, err := reader.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("cannot read chunk to buffer: %v", err)
+		}
+		req := &pb.UploadImageRequest{
+			Data: &pb.UploadImageRequest_ChunkData{
+				ChunkData: buffer[:n],
+			},
+		}
+		err = stream.Send(req)
+		if err != nil {
+			log.Fatalf("cannot send chunk to server: %v", err)
+		}
+	}
+	resp, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("cannot receive response: %v", err)
+	}
+	log.Printf("image uploaded with id: %s, size: %d", resp.GetId(), resp.GetByteSize())
 }
 
 func searchLaptop(parCtx context.Context, client pb.LaptopServiceClient, filter *pb.Filter) {
@@ -76,8 +142,7 @@ func searchLaptop(parCtx context.Context, client pb.LaptopServiceClient, filter 
 	}
 }
 
-func createLaptop(parCtx context.Context, client pb.LaptopServiceClient) {
-	laptop := sample.NewLaptop()
+func createLaptop(parCtx context.Context, client pb.LaptopServiceClient, laptop *pb.Laptop) {
 	req := &pb.CreateLaptopRequest{
 		Laptop: laptop,
 	}

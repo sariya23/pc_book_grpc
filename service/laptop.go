@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"log"
 	"main/pb"
 	"main/storage"
@@ -13,6 +14,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+const (
+	maxImageSize = 1 << 20
 )
 
 type LaptopStorager interface {
@@ -107,6 +112,70 @@ func (s *LaptopServer) SearchLaptop(
 }
 
 func (s *LaptopServer) UploadImage(
-	grpc.ClientStreamingServer[pb.UploadImageRequest, pb.UploadImageResponse]) error {
+	stream grpc.ClientStreamingServer[pb.UploadImageRequest, pb.UploadImageResponse]) error {
+	req, err := stream.Recv()
+	if err != nil {
+		return status.Errorf(codes.Unknown, "cannon receive image info: %v", err)
+	}
+	laptopId := req.GetInfo().GetLaptopId()
+	imageType := req.GetInfo().GetImageType()
+	log.Printf("receive laptop with id: %v image type: %v", laptopId, imageType)
+
+	laptop, err := s.LaptopStorage.Get(laptopId)
+	if err != nil {
+		return status.Errorf(codes.Internal, "cannot get laptop with id %v: %v", laptopId, err)
+	}
+
+	if laptop == nil {
+		return status.Errorf(codes.Internal, "laptop with id: %v does not exists", laptopId)
+	}
+
+	imageData := bytes.Buffer{}
+	var imageSize int
+
+	for {
+		if stream.Context().Err() == context.Canceled {
+			log.Println("context cancelled")
+			return status.Error(codes.Canceled, "cancelled context")
+		}
+
+		if stream.Context().Err() == context.DeadlineExceeded {
+			log.Println("deadline exceeded")
+			return status.Error(codes.DeadlineExceeded, "deadline exceeded")
+		}
+		log.Println("waiting image data")
+		req, err := stream.Recv()
+		if err == io.EOF {
+			log.Println("no more data")
+			break
+		}
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot receive data: %v", err)
+		}
+		chunk := req.GetChunkData()
+		size := len(chunk)
+		imageSize += size
+		if imageSize > maxImageSize {
+			return status.Errorf(codes.InvalidArgument, "image is too large: %d > %d", imageSize, maxImageSize)
+		}
+		_, err = imageData.Write(chunk)
+		if err != nil {
+			status.Errorf(codes.Internal, "cannot write data: %v", err)
+		}
+	}
+	imageId, err := s.ImageStorage.Save(laptopId, imageType, imageData)
+	if err != nil {
+		return status.Errorf(codes.Internal, "cannot save image: %v", err)
+	}
+
+	resp := &pb.UploadImageResponse{
+		Id:       imageId,
+		ByteSize: uint32(imageSize),
+	}
+	err = stream.SendAndClose(resp)
+	if err != nil {
+		return status.Errorf(codes.Unknown, "cannot send response: %v", err)
+	}
+	log.Println("image save successfully")
 	return nil
 }
