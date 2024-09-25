@@ -87,6 +87,7 @@ func (s *LaptopServer) CreateLaptop(
 		}
 		return nil, status.Error(code, "cennot save laptop")
 	}
+	log.Printf("create laptop with id: %s", laptop.Id)
 	return &pb.CreateLaptopResponse{Id: laptop.Id}, nil
 }
 
