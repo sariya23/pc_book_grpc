@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package pc;
+option go_package = "./pb";
+
+message LogRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LogResponse {
+    string token = 1;
+}
+
+service AuthService {
+    rpc Login(LogRequest) returns (LogResponse) {};
+}
