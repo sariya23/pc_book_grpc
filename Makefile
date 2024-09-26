@@ -13,3 +13,4 @@ client:
 test:
 	go test -cover -race ./...
 
+.PHONY: gen_pb clean_pb server test client

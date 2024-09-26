@@ -15,7 +15,7 @@ type AuthInterceptor struct {
 	accessibleRoles map[string][]string
 }
 
-func NEwAuthInterceptor(jwtWanager *JWTManager, roles map[string][]string) *AuthInterceptor {
+func NewAuthInterceptor(jwtWanager *JWTManager, roles map[string][]string) *AuthInterceptor {
 	return &AuthInterceptor{
 		jwtManager:      jwtWanager,
 		accessibleRoles: roles,
@@ -66,7 +66,8 @@ func (i *AuthInterceptor) authorize(ctx context.Context, method string) error {
 		return status.Error(codes.Unauthenticated, "no metadata")
 	}
 
-	values := md["authorization"]
+	values, ok := md["authorization"]
+	log.Println(md)
 	if len(values) == 0 {
 		return status.Error(codes.Unauthenticated, "auth token in not present")
 	}

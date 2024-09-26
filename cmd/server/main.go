@@ -38,7 +38,7 @@ func main() {
 	authServer := service.NewAuthServer(userStorage, jwtManager)
 	server := service.NewLaptopServer(laptopStorage, imageStorage, ratingStorage)
 
-	interceptor := service.NEwAuthInterceptor(jwtManager, accessibleRoles())
+	interceptor := service.NewAuthInterceptor(jwtManager, accessibleRoles())
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptor.Unary()),
 		grpc.StreamInterceptor(interceptor.Stream()),
