@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -38,9 +37,11 @@ func main() {
 	jwtManager := service.NewJWTManager(jwtKey, TTL)
 	authServer := service.NewAuthServer(userStorage, jwtManager)
 	server := service.NewLaptopServer(laptopStorage, imageStorage, ratingStorage)
+
+	interceptor := service.NEwAuthInterceptor(jwtManager, accessibleRoles())
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryIntercepter),
-		grpc.StreamInterceptor(streamIntercepter),
+		grpc.UnaryInterceptor(interceptor.Unary()),
+		grpc.StreamInterceptor(interceptor.Stream()),
 	)
 	pb.RegisterAuthServiceServer(grpcServer, authServer)
 	pb.RegisterLaptopServiceServer(grpcServer, server)
@@ -57,22 +58,13 @@ func main() {
 	}
 }
 
-func unaryIntercepter(ctx context.Context,
-	req any,
-	info *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler,
-) (resp any, err error) {
-	log.Println("--> unary intercepter: ", info.FullMethod)
-	return handler(ctx, req)
-}
-
-func streamIntercepter(srv any,
-	ss grpc.ServerStream,
-	info *grpc.StreamServerInfo,
-	handler grpc.StreamHandler,
-) error {
-	log.Println("--> stream intercepter: ", info.FullMethod)
-	return handler(srv, ss)
+func accessibleRoles() map[string][]string {
+	const laptopServicePath = "/pc.LaptopService/"
+	return map[string][]string{
+		fmt.Sprintf("%v%v", laptopServicePath, "CreateLaptop"): {"admin"},
+		fmt.Sprintf("%v%v", laptopServicePath, "UploadImage"):  {"admin"},
+		fmt.Sprintf("%v%v", laptopServicePath, "RateLaptop"):   {"admin", "user"},
+	}
 }
 
 func seedUsers(userStorage service.UserStorager) error {
