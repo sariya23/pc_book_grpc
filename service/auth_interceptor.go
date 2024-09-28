@@ -66,8 +66,7 @@ func (i *AuthInterceptor) authorize(ctx context.Context, method string) error {
 		return status.Error(codes.Unauthenticated, "no metadata")
 	}
 
-	values, ok := md["authorization"]
-	log.Println(md)
+	values := md["authorization"]
 	if len(values) == 0 {
 		return status.Error(codes.Unauthenticated, "auth token in not present")
 	}
