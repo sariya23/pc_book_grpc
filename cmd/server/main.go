@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
@@ -9,9 +10,11 @@ import (
 	"main/service"
 	"main/storage"
 	"net"
+	"path/filepath"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // TODO: secret in .env
@@ -38,8 +41,14 @@ func main() {
 	authServer := service.NewAuthServer(userStorage, jwtManager)
 	server := service.NewLaptopServer(laptopStorage, imageStorage, ratingStorage)
 
+	tlsCreds, err := loadTLSCreds()
+	if err != nil {
+		log.Fatalf("cannot load TLS creds: %v", err)
+	}
+
 	interceptor := service.NewAuthInterceptor(jwtManager, accessibleRoles())
 	grpcServer := grpc.NewServer(
+		grpc.Creds(tlsCreds),
 		grpc.UnaryInterceptor(interceptor.Unary()),
 		grpc.StreamInterceptor(interceptor.Stream()),
 	)
@@ -56,6 +65,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v: cannot start server", op)
 	}
+}
+
+func loadTLSCreds() (credentials.TransportCredentials, error) {
+	serverCert, err := tls.LoadX509KeyPair(filepath.Join("cert", "server-cert.pem"), filepath.Join("cert", "server-key.pem"))
+	if err != nil {
+		return nil, err
+	}
+
+	config := &tls.Config{
+		Certificates: []tls.Certificate{serverCert},
+		ClientAuth:   tls.NoClientCert,
+	}
+	return credentials.NewTLS(config), nil
 }
 
 func accessibleRoles() map[string][]string {
