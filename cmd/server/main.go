@@ -26,8 +26,9 @@ const (
 func main() {
 	const op = "cmd.server.main"
 	port := flag.Int("port", 0, "the server port")
+	enableTLS := flag.Bool("tsl", false, "enable SSL/TLS")
 	flag.Parse()
-	log.Printf("%v: starting grpc server\n", op)
+	log.Printf("%v: starting grpc server, TLS: %v\n", op, *enableTLS)
 	laptopStorage := storage.NewInMemoryLaptopStorage()
 	imageStorage := storage.NewImageStorage("img")
 	ratingStorage := storage.NewRatingStorage()
@@ -40,18 +41,22 @@ func main() {
 	jwtManager := service.NewJWTManager(jwtKey, TTL)
 	authServer := service.NewAuthServer(userStorage, jwtManager)
 	server := service.NewLaptopServer(laptopStorage, imageStorage, ratingStorage)
-
-	tlsCreds, err := loadTLSCreds()
-	if err != nil {
-		log.Fatalf("cannot load TLS creds: %v", err)
-	}
-
 	interceptor := service.NewAuthInterceptor(jwtManager, accessibleRoles())
-	grpcServer := grpc.NewServer(
-		grpc.Creds(tlsCreds),
+
+	serverOpts := []grpc.ServerOption{
 		grpc.UnaryInterceptor(interceptor.Unary()),
 		grpc.StreamInterceptor(interceptor.Stream()),
-	)
+	}
+
+	if *enableTLS {
+		tlsCreds, err := loadTLSCreds()
+		if err != nil {
+			log.Fatalf("cannot load TLS creds: %v", err)
+		}
+		serverOpts = append(serverOpts, grpc.Creds(tlsCreds))
+	}
+
+	grpcServer := grpc.NewServer(serverOpts...)
 	pb.RegisterAuthServiceServer(grpcServer, authServer)
 	pb.RegisterLaptopServiceServer(grpcServer, server)
 

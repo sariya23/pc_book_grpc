@@ -17,6 +17,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -28,13 +29,18 @@ const (
 func main() {
 	parentCtx := context.Background()
 	serverAddr := flag.String("addr", "", "the server address")
+	enableTLS := flag.Bool("tls", false, "enable")
 	flag.Parse()
-	log.Printf("dial server %s", *serverAddr)
-	tlsCreds, err := loadTLSCreds()
-	if err != nil {
-		log.Fatal(err)
+	log.Printf("dial server %s, TLS: %t", *serverAddr, *enableTLS)
+	transportOpts := grpc.WithTransportCredentials(insecure.NewCredentials())
+	if *enableTLS {
+		tlsCreds, err := loadTLSCreds()
+		if err != nil {
+			log.Fatal(err)
+		}
+		transportOpts = grpc.WithTransportCredentials(tlsCreds)
 	}
-	authConn, err := grpc.NewClient(*serverAddr, grpc.WithTransportCredentials(tlsCreds))
+	authConn, err := grpc.NewClient(*serverAddr, transportOpts)
 	if err != nil {
 		log.Fatalf("cannot connect to server with address: %s. Error: (%v)", *serverAddr, err)
 	}
@@ -45,7 +51,7 @@ func main() {
 	}
 	conn, err := grpc.NewClient(
 		*serverAddr,
-		grpc.WithTransportCredentials(tlsCreds),
+		transportOpts,
 		grpc.WithUnaryInterceptor(interceptor.Unary()),
 		grpc.WithStreamInterceptor(interceptor.Stream()),
 	)
