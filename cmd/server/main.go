@@ -18,6 +18,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // TODO: secret in .env
@@ -34,9 +35,11 @@ var (
 func main() {
 	ctx := context.Background()
 	const op = "cmd.server.main"
+
 	port := flag.Int("port", 0, "the server port")
 	enableTLS := flag.Bool("tsl", false, "enable SSL/TLS")
 	serverType := flag.String("type", "grpc", "type os server: grpc/rest")
+	grpcEndpoint := flag.String("endpoint", "", "gRPC endpoint")
 
 	flag.Parse()
 	log.Printf("%v: starting grpc server, TLS: %v\n", op, *enableTLS)
@@ -61,7 +64,7 @@ func main() {
 	if *serverType == "grpc" {
 		err = runGRPCServer(authServer, laptopServer, jwtManager, *enableTLS, listener)
 	} else {
-		err = runRESTServer(ctx, authServer, laptopServer, *enableTLS, listener)
+		err = runRESTServer(ctx, authServer, laptopServer, *enableTLS, listener, *grpcEndpoint)
 	}
 	if err != nil {
 		log.Fatalf("op: %v, error: %v", op, err)
@@ -104,17 +107,20 @@ func runRESTServer(
 	laptopServer pb.LaptopServiceServer,
 	enableTLS bool,
 	listener net.Listener,
+	grpcEndpoint string,
 ) error {
 	mux := runtime.NewServeMux()
+	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	err := pb.RegisterAuthServiceHandlerServer(ctx, mux, authServer)
+	// err := pb.RegisterAuthServiceHandlerServer(ctx, mux, authServer)
+	err := pb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
 	if err != nil {
 		return nil
 	}
 
-	err = pb.RegisterLaptopServiceHandlerServer(ctx, mux, laptopServer)
+	err = pb.RegisterLaptopServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
 	if err != nil {
 		return nil
 	}

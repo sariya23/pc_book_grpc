@@ -16,8 +16,11 @@ server2:
 server:
 	go run cmd/server/main.go -port 8080
 
-rest:
+grpc:
 	go run cmd/server/main.go -port 8081 -type grpc
+
+rest:
+	go run cmd/server/main.go -port 8081 -type rest -endpoint 0.0.0.0:8080
 
 client:
 	go run cmd/client/main.go -addr 0.0.0.0:8080
