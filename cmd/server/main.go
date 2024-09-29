@@ -64,7 +64,7 @@ func main() {
 		err = runRESTServer(ctx, authServer, laptopServer, *enableTLS, listener)
 	}
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("op: %v, error: %v", op, err)
 	}
 }
 

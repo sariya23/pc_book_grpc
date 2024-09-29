@@ -28,7 +28,7 @@ func (au *AuthServer) Login(ctx context.Context, req *pb.LogRequest) (*pb.LogRes
 		return nil, status.Errorf(codes.Internal, "cannot find user: %v", err)
 	}
 	if user == nil || !user.IsPasswordCorrect(req.GetPassword()) {
-		log.Printf("invalid creds for %v \n", user.UserName)
+		log.Printf("invalid creds for %v \n", user)
 		return nil, status.Errorf(codes.NotFound, "invalid creds")
 	}
 
