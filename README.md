@@ -10,8 +10,3 @@ REST API doc:
 
 - laptop service - https://app.swaggerhub.com/apis/sariya/PC-book-laprop-service/1.0. Взаимодейсвтие с сущностями
 - auth service - https://app.swaggerhub.com/apis/sariya/PC-book-auth-service/1.0. Сервис аутентификации
-
-### TODO
-
-- PostgreSQL
-- Docker compose run
